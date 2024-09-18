@@ -10,13 +10,13 @@
 DHT11 dht(DHTPIN, DHTTYPE);
 BH1750 lightMeter;
 
-int voltageSensorPin = A0;
-int currentSensorPin = A1;
-int dustSensorPin = A2;
+int voltageSensorPin = 33;
+int currentSensorPin = 34;
+int lightSensorPin = A2;
 
 // Wi-Fi credentials
-const char* ssid = "your-SSID";          // Replace with your WiFi SSID
-const char* password = "your-PASSWORD";  // Replace with your WiFi password
+const char* ssid = "Sams9plus";          // Replace with your WiFi SSID
+const char* password = "Samuel1234";  // Replace with your WiFi password
 
 void setup() {
   Serial.begin(115200);
