@@ -7,7 +7,11 @@ app = Flask(__name__)
 def init_db():
     conn = sqlite3.connect('sensor_data.db')
     c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS SensorData (id INTEGER PRIMARY KEY, voltage REAL, current REAL, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS SensorData (
+            id INTEGER PRIMARY KEY,
+            voltage REAL,
+            current REAL,
+            timestamp TEXT)''')  # Now includes timestamp as a TEXT field
     conn.commit()
     conn.close()
 
@@ -15,11 +19,12 @@ def init_db():
 def upload_data():
     voltage = request.json.get('voltage')
     current = request.json.get('current')
-    
+    timestamp = request.json.get('timestamp')  # Get the time data
+
     # Store the data in the database
     conn = sqlite3.connect('sensor_data.db')
     c = conn.cursor()
-    c.execute("INSERT INTO SensorData (voltage, current) VALUES (?, ?)", (voltage, current))
+    c.execute("INSERT INTO SensorData (voltage, current, timestamp) VALUES (?, ?, ?)", (voltage, current, timestamp))
     conn.commit()
     conn.close()
     return {'status': 'success'}, 200

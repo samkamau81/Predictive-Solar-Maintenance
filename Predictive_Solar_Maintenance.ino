@@ -1,18 +1,16 @@
 #include <Wire.h>
 #include <BH1750.h>
-#include <DHT11.h>
+#include <Adafruit_AHT10.h>
 #include "communication.h"
 
-#define DHTPIN 3
-#define DHTTYPE DHT22
 #define LED_PIN 2
 
-DHT11 dht(DHTPIN, DHTTYPE);
+Adafruit_AHT10 aht;
 BH1750 lightMeter;
 
 int voltageSensorPin = 33;
 int currentSensorPin = 34;
-int lightSensorPin = A2;
+//int lightSensorPin = A2;
 
 // Wi-Fi credentials
 const char* ssid = "Sams9plus";          // Replace with your WiFi SSID
@@ -20,7 +18,8 @@ const char* password = "Samuel1234";  // Replace with your WiFi password
 
 void setup() {
   Serial.begin(115200);
-  dht.begin();
+  Wire.begin(22,21);
+  aht.begin();
   lightMeter.begin();
   pinMode(LED_PIN, OUTPUT);
 
@@ -40,14 +39,14 @@ void loop() {
   // Read Dust Density
   digitalWrite(LED_PIN, LOW);  // Turn on the LED
   delayMicroseconds(280);  // Wait for sensor stabilization
-  int dustValue = analogRead(dustSensorPin);
+  rPin);
   delayMicroseconds(40);  // Delay to avoid spikes
   digitalWrite(LED_PIN, HIGH);  // Turn off the LED
-  float dustDensity = (dustValue / 1023.0) * 100.0;  // Example conversion to percentage
+  
 
   // Read Temperature and Humidity
-  float temperature = dht.readTemperature();
-  float humidity = dht.readHumidity();
+  float temperature = aht.readTemperature();
+  float humidity = aht.readHumidity();
 
   // Read Light Intensity
   float lightIntensity = lightMeter.readLightLevel();
@@ -57,9 +56,7 @@ void loop() {
   Serial.print(voltage);
   Serial.print(" V, Current: ");
   Serial.print(current);
-  Serial.print(" A, Dust Density: ");
-  Serial.print(dustDensity);
-  Serial.print(" %, Temperature: ");
+   Serial.print(" %, Temperature: ");
   Serial.print(temperature);
   Serial.print(" C, Humidity: ");
   Serial.print(humidity);
@@ -68,7 +65,7 @@ void loop() {
   Serial.println(" lx");
 
   // Send data to server
-  sendDataToServer(voltage, current, dustDensity, temperature, humidity, lightIntensity);
+  sendDataToServer(voltage, current, temperature, humidity, lightIntensity);
 
   delay(2000);  // Delay between readings
 }
