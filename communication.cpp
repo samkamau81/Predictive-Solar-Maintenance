@@ -1,9 +1,9 @@
-// communication.cpp
-
 #include "communication.h"
 
-// Function to set up Wi-Fi
-void setupWiFi(const char* ssid, const char* password) {
+char ssid[]   = "Kamaus";        // Your network SSID
+const char* password = "G@t0t000";    // Your network password
+
+void setupWiFi() {
   WiFi.begin(ssid, password);
   Serial.print("Connecting to WiFi");
   while (WiFi.status() != WL_CONNECTED) {
@@ -11,13 +11,14 @@ void setupWiFi(const char* ssid, const char* password) {
     Serial.print(".");
   }
   Serial.println("Connected to WiFi!");
+  Serial.println(WiFi.localIP());  // Print the local IP address
 }
 
-// Function to send data to the server
 void sendDataToServer(float voltage, float current, float dustDensity, float temperature, float humidity, float lightIntensity) {
   if (WiFi.status() == WL_CONNECTED) {
+    WiFiClient client;
     HTTPClient http;
-    String serverUrl = "http://your-server-url/api/data"; // Replace with your server URL
+    const char* serverName = "http://192.168.100.6:9000/upload"; // Replace with your server IP
 
     // Create a JSON object to send
     String jsonData = "{";
@@ -29,8 +30,14 @@ void sendDataToServer(float voltage, float current, float dustDensity, float tem
     jsonData += "\"lightIntensity\":" + String(lightIntensity);
     jsonData += "}";
 
-    http.begin(serverUrl);
+    // Debugging
+    Serial.println("Sending data: " + jsonData);
+
+    http.begin(client, serverName);
     http.addHeader("Content-Type", "application/json");
+
+    // Set timeout
+    http.setTimeout(5000); // 5 seconds timeout
 
     // Send the data to the server using POST
     int httpResponseCode = http.POST(jsonData);
@@ -41,7 +48,7 @@ void sendDataToServer(float voltage, float current, float dustDensity, float tem
       Serial.println(response);
     } else {
       Serial.print("Error sending data: ");
-      Serial.println(httpResponseCode);
+      Serial.println(httpResponseCode);  // Debugging error codes
     }
 
     http.end();

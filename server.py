@@ -1,34 +1,31 @@
-from flask import Flask, request
-import sqlite3
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# Create a database connection
-def init_db():
-    conn = sqlite3.connect('sensor_data.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS SensorData (
-            id INTEGER PRIMARY KEY,
-            voltage REAL,
-            current REAL,
-            timestamp TEXT)''')  # Now includes timestamp as a TEXT field
-    conn.commit()
-    conn.close()
-
+# Route to handle POST request and return the data in response
 @app.route('/upload', methods=['POST'])
 def upload_data():
-    voltage = request.json.get('voltage')
-    current = request.json.get('current')
-    timestamp = request.json.get('timestamp')  # Get the time data
+    data = request.json #{"voltage":0.00,"current":0.00,"dustDensity":10.00,"temperature":20.10,"humidity":22.00,"lightIntensity":34.00}   # Get the JSON data from the POST request
+    print(data)
+    voltage = data.get('voltage')
+    current = data.get('current')
+    dustDensity = data.get('dustDensity')
+    temperature = data.get('temperature')
+    humidity = data.get('humidity')
+    lightIntensity = data.get('lightIntensity')
 
-    # Store the data in the database
-    conn = sqlite3.connect('sensor_data.db')
-    c = conn.cursor()
-    c.execute("INSERT INTO SensorData (voltage, current, timestamp) VALUES (?, ?, ?)", (voltage, current, timestamp))
-    conn.commit()
-    conn.close()
-    return {'status': 'success'}, 200
+    # Return the received data back as a response
+    response_data = {
+        'voltage': voltage,
+        'current': current,
+        'dustDensity': dustDensity,
+        'temperature': temperature,
+        'humidity': humidity,
+        'lightIntensity': lightIntensity
+    }
+    
+    return jsonify(response_data), 200  # Return the data as a JSON response
 
 if __name__ == '__main__':
-    init_db()
-    app.run(host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=9000)
+
