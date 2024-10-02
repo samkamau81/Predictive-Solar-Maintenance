@@ -1,91 +1,17 @@
-<<<<<<< Updated upstream
-#include <Wire.h>
-#include <BH1750.h>
-#include <DHT11.h>
-#include "communication.h"
-
-#define DHTPIN 3
-#define DHTTYPE DHT22
-#define LED_PIN 2
-
-DHT11 dht(DHTPIN, DHTTYPE);
-BH1750 lightMeter;
-
-int voltageSensorPin = A0;
-int currentSensorPin = A1;
-int dustSensorPin = A2;
-
-// Wi-Fi credentials
-const char* ssid = "your-SSID";          // Replace with your WiFi SSID
-const char* password = "your-PASSWORD";  // Replace with your WiFi password
-
-void setup() {
-  Serial.begin(115200);
-  dht.begin();
-  lightMeter.begin();
-  pinMode(LED_PIN, OUTPUT);
-
-  // Initialize WiFi
-  setupWiFi(ssid, password);
-}
-
-void loop() {
-  // Read Voltage
-  int voltageValue = analogRead(voltageSensorPin);
-  float voltage = (voltageValue / 1023.0) * 5.0 * (21.5 / 5.0);  // Adjust based on voltage divider
-
-  // Read Current
-  int currentValue = analogRead(currentSensorPin);
-  float current = (currentValue / 1023.0) * 5.0 * 0.67;  // Adjust based on sensor specs
-
-  // Read Dust Density
-  digitalWrite(LED_PIN, LOW);  // Turn on the LED
-  delayMicroseconds(280);  // Wait for sensor stabilization
-  int dustValue = analogRead(dustSensorPin);
-  delayMicroseconds(40);  // Delay to avoid spikes
-  digitalWrite(LED_PIN, HIGH);  // Turn off the LED
-  float dustDensity = (dustValue / 1023.0) * 100.0;  // Example conversion to percentage
-
-  // Read Temperature and Humidity
-  float temperature = dht.readTemperature();
-  float humidity = dht.readHumidity();
-
-  // Read Light Intensity
-  float lightIntensity = lightMeter.readLightLevel();
-
-  // Print data to Serial
-  Serial.print("Voltage: ");
-  Serial.print(voltage);
-  Serial.print(" V, Current: ");
-  Serial.print(current);
-  Serial.print(" A, Dust Density: ");
-  Serial.print(dustDensity);
-  Serial.print(" %, Temperature: ");
-  Serial.print(temperature);
-  Serial.print(" C, Humidity: ");
-  Serial.print(humidity);
-  Serial.print(" %, Light Intensity: ");
-  Serial.print(lightIntensity);
-  Serial.println(" lx");
-
-  // Send data to server
-  sendDataToServer(voltage, current, dustDensity, temperature, humidity, lightIntensity);
-
-  delay(2000);  // Delay between readings
-}
-=======
 #include <Wire.h>
 #include <BH1750.h>
 #include <Adafruit_AHT10.h>
+#include <Adafruit_INA219.h>
 #include "communication.h"
 
 #define LED_PIN 2
 
 Adafruit_AHT10 aht;
 BH1750 lightMeter;
+Adafruit_INA219 ina219;
 
 //int voltageSensorPin = 33;
-int currentSensorPin = 34;
+//int currentSensorPin = 34;
 //int lightSensorPin = A2;
 
 // Wi-Fi credentials
@@ -94,9 +20,27 @@ const char* password = "AquaCoin1";  // Replace with your WiFi password
 
 void setup() {
   Serial.begin(115200);
+  while (!Serial) {
+      delay(1);
+  }
+  uint32_t currentFrequency;
+  //Initialize Sensors
+
   Wire.begin(22,21);
   aht.begin();
   lightMeter.begin();
+  // Initialize the INA219.
+  // By default the initialization will use the largest range (32V, 2A).  However
+  // you can call a setCalibration function to change this range (see comments).
+  if (! ina219.begin()) {
+    Serial.println("Failed to find INA219 chip");
+    while (1) { delay(10); }
+  }
+  // To use a slightly lower 32V, 1A range (higher precision on amps):
+  ina219.setCalibration_32V_1A();
+  // Or to use a lower 16V, 400mA range (higher precision on volts and amps):
+  //ina219.setCalibration_16V_400mA();
+
   pinMode(LED_PIN, OUTPUT);
 
   // Initialize WiFi
@@ -104,20 +48,8 @@ void setup() {
 }
 
 void loop() {
-  // Read Voltage
- // int voltageValue = analogRead(voltageSensorPin);
- // float voltage = (voltageValue / 1023.0) * 5.0 * (21.5 / 5.0);  // Adjust based on voltage divider
-
-  // Read Current
-  int currentValue = analogRead(currentSensorPin);
-  float current = (currentValue / 1023.0) * 5.0 * 0.67;  // Adjust based on sensor specs
-
-  // Read Dust Density
-  digitalWrite(LED_PIN, LOW);  // Turn on the LED
-  delayMicroseconds(280);  // Wait for sensor stabilization
-  
-  delayMicroseconds(40);  // Delay to avoid spikes
-  digitalWrite(LED_PIN, HIGH);  // Turn off the LED
+  // Read from INA219
+ power_values();
   
 
   // Read Temperature and Humidity
@@ -131,11 +63,7 @@ void loop() {
   float lightIntensity = lightMeter.readLightLevel();
 
   // Print data to Serial
-  Serial.print("Voltage: ");
-  //Serial.print(voltage);
-  Serial.print(" V, Current: ");
-  Serial.print(current);
-   Serial.print(" %, Temperature: ");
+  Serial.print(" %, Temperature: ");
   Serial.print(temp.temperature);
   Serial.print(" C, Humidity: ");
   Serial.print(humidity.relative_humidity);
@@ -148,4 +76,25 @@ void loop() {
 
   delay(2000);  // Delay between readings
 }
->>>>>>> Stashed changes
+void power_values(){
+ float shuntvoltage = 0;
+  float busvoltage = 0;
+  float current_mA = 0;
+  float loadvoltage = 0;
+  float power_mW = 0;
+
+  shuntvoltage = ina219.getShuntVoltage_mV();
+  busvoltage = ina219.getBusVoltage_V();
+  current_mA = ina219.getCurrent_mA();
+  power_mW = ina219.getPower_mW();
+  loadvoltage = busvoltage + (shuntvoltage / 1000);
+  
+  Serial.print("Bus Voltage:   "); Serial.print(busvoltage); Serial.println(" V");
+  Serial.print("Shunt Voltage: "); Serial.print(shuntvoltage); Serial.println(" mV");
+  Serial.print("Load Voltage:  "); Serial.print(loadvoltage); Serial.println(" V");
+  Serial.print("Current:       "); Serial.print(current_mA); Serial.println(" mA");
+  Serial.print("Power:         "); Serial.print(power_mW); Serial.println(" mW");
+  Serial.println("");
+
+}
+

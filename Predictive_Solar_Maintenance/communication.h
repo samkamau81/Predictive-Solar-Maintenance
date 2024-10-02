@@ -3,8 +3,8 @@
 #ifndef COMMUNICATION_H
 #define COMMUNICATION_H
 
-#include <WiFi.h>
-#include <HTTPClient.h>
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
 
 // Function prototypes
 void setupWiFi(const char* ssid, const char* password);

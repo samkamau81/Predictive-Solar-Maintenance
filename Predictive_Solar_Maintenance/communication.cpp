@@ -14,22 +14,21 @@ void setupWiFi(const char* ssid, const char* password) {
 }
 
 // Function to send data to the server
-void sendDataToServer(float voltage, float current, float dustDensity, float temperature, float humidity, float lightIntensity) {
+void sendDataToServer( float temperature, float humidity, float lightIntensity) {
   if (WiFi.status() == WL_CONNECTED) {
+    WiFiClient client;
     HTTPClient http;
     String serverUrl = "http://your-server-url/api/data"; // Replace with your server URL
 
     // Create a JSON object to send
     String jsonData = "{";
-    jsonData += "\"voltage\":" + String(voltage) + ",";
-    jsonData += "\"current\":" + String(current) + ",";
-    jsonData += "\"dustDensity\":" + String(dustDensity) + ",";
+    
     jsonData += "\"temperature\":" + String(temperature) + ",";
     jsonData += "\"humidity\":" + String(humidity) + ",";
     jsonData += "\"lightIntensity\":" + String(lightIntensity);
     jsonData += "}";
 
-    http.begin(serverUrl);
+    http.begin(client, serverUrl);
     http.addHeader("Content-Type", "application/json");
 
     // Send the data to the server using POST
