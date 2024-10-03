@@ -18,7 +18,7 @@ void sendDataToServer( float temperature, float humidity, float lightIntensity) 
   if (WiFi.status() == WL_CONNECTED) {
     WiFiClient client;
     HTTPClient http;
-    String serverUrl = "http://your-server-url/api/data"; // Replace with your server URL
+    String serverUrl = "http://192.168.100.6:9000/upload"; // Replace with your server URL
 
     // Create a JSON object to send
     String jsonData = "{";
