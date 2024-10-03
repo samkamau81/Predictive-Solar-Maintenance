@@ -36,6 +36,7 @@ def upload_data():
     
     voltage = data.get('voltage')
     current = data.get('current')
+    dustDensity = data.get('dustDensity')
     temperature = data.get('temperature')
     humidity = data.get('humidity')
     lightIntensity = data.get('lightIntensity')
